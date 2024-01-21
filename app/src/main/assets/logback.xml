@@ -1,0 +1,37 @@
+<configuration>
+    <property name="LOG_DIR" value="/sdcard/.logs" />
+
+    <!-- Create a logcat appender -->
+    <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
+        <encoder>
+            <pattern>%class{0}.%method{full}\(%F:%L\) - %msg</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Create a file appender -->
+    <appender name="fileLogger" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/ComposeTs.log</file>
+
+        <encoder>
+            <pattern>%date [%thread] %level %class{full}.%method{full}\(%F:%L\) - %msg%n%throwable
+            </pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/ComposeTs.%i.log.gz</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>10</maxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <totalSizeCap>1GB</totalSizeCap>
+            <maxFileSize>20MB</maxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <!-- Write INFO (and higher-level) messages to logcat -->
+    <root level="DEBUG">
+        <appender-ref ref="logcat" />
+        <appender-ref ref="fileLogger" />
+    </root>
+</configuration>
