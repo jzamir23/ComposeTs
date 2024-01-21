@@ -40,7 +40,7 @@ dependencies {
     implementation(libs.korLibs.kmem.android)
 //    implementation(libs.korLibs.klock)
     implementation(libs.korLibs.klock.android)
-    implementation(libs.zstd.jni)
+    compileOnly(libs.zstd.jni)
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
@@ -55,7 +55,7 @@ afterEvaluate {
             create<MavenPublication>("maven") {
                 artifactId = "mqtt"// com.mqtt.wz:mqtt:1.0.1
                 group = "com.mqtt.wz"
-                version = "1.0.6"
+                version = "1.0.7"
                 pom.withXml {
                     val dependenciesNode = asNode().appendNode("dependencies")
                     configurations.implementation.get().allDependencies.forEach {
