@@ -1,14 +1,14 @@
 package com.v2project.mqtt.api
 
-import com.v2project.mqtt.ok.bean.EnumRT
-import com.v2project.mqtt.ok.bean.Payload
-import com.v2project.mqtt.ok.bean.ResponsePayload
-import com.v2project.mqtt.ok.bean.TransportPayload
 import com.hivemq.client.mqtt.MqttClient
 import com.hivemq.client.mqtt.MqttClientConfig
 import com.hivemq.client.mqtt.MqttClientState
 import com.hivemq.client.mqtt.mqtt3.message.publish.Mqtt3Publish
 import com.v2project.mqtt.ok.OkMqttClient
+import com.v2project.mqtt.ok.bean.EnumRT
+import com.v2project.mqtt.ok.bean.Payload
+import com.v2project.mqtt.ok.bean.ResponsePayload
+import com.v2project.mqtt.ok.bean.TransportPayload
 import com.v2project.mqtt.ok.int.ICallBack
 import com.v2project.mqtt.ok.int.IMqttClient
 import com.v2project.mqtt.ok.int.IMqttListener
@@ -31,7 +31,9 @@ class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
                 val payloadStr = String(publish.payloadAsBytes)
                 decodeFromString<TransportPayload>(format, payloadStr)?.let {
                     mqttApiPool.match(
-                        publish.topic.toString(), it.token, CompressUtils.decompress(it.compress, it.payloadBytes)
+                        publish.topic.toString(),
+                        it.token,
+                        CompressUtils.decompress(it.compress, it.payloadBytes)
                     )
                 } ?: kotlin.run {
                     mqttApiPool.listenerList.forEach {
@@ -81,7 +83,8 @@ class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
             }
             this.body.apply {
                 this.topic = topic
-                this.payload = encodeToString(format, transportPayload).toByteArray()
+                //this.payload = encodeToString(format, transportPayload).toByteArray()
+                this.payload = requestStr.toByteArray()
                 this.qos = mOptions.qos
                 this.retain = mOptions.retain
             }
