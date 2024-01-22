@@ -18,11 +18,19 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
+            setUrl("https://packages.aliyun.com/maven/repository/2451671-release-NAQFTP/")
             credentials {
-                username = "616e53e660ebaf99ec290f15"
-                password = "4m=p-LsjACQt"
+                username = "65adb8c280528f89ca14f9f7"
+                password = "9xe48Swe4gGU"
             }
-            setUrl("https://packages.aliyun.com/maven/repository/2103831-release-ehKaRc/")
+        }
+
+        maven {
+            setUrl("https://packages.aliyun.com/maven/repository/2451671-snapshot-hSSpID/")
+            credentials {
+                username = "65adb8c280528f89ca14f9f7"
+                password = "9xe48Swe4gGU"
+            }
         }
     }
 }

@@ -80,10 +80,10 @@ afterEvaluate {
         }
         repositories {
             maven {
-                setUrl("https://packages.aliyun.com/maven/repository/2103831-release-ehKaRc/")
+                setUrl("https://packages.aliyun.com/maven/repository/2451671-release-NAQFTP/")
                 credentials {
-                    username = "60a23aa16da2f73831b26893"
-                    password = "vA])Xd3-HwVe"
+                    username = "65adb8c280528f89ca14f9f7"
+                    password = "9xe48Swe4gGU"
                 }
             }
         }
