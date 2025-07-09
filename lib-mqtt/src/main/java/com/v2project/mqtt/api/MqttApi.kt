@@ -1,9 +1,7 @@
 package com.v2project.mqtt.api
 
-import com.hivemq.client.mqtt.MqttClient
 import com.hivemq.client.mqtt.MqttClientConfig
 import com.hivemq.client.mqtt.MqttClientState
-import com.hivemq.client.mqtt.mqtt3.message.publish.Mqtt3Publish
 import com.v2project.mqtt.ok.OkMqttClient
 import com.v2project.mqtt.ok.bean.EnumRT
 import com.v2project.mqtt.ok.bean.Payload
@@ -22,12 +20,11 @@ import kotlin.reflect.full.createInstance
 class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
     val format by lazy { JsonLazyFormat.lazyFormat(encodeDefaults = true) }
     val mqttApiPool = MqttApiPool()
-    var deviceId = ""
     val requestOptions by lazy { RequestOptions() }
 
-    init {
+    /*init {
         mqttClient.listener = object : IMqttListener {
-            override fun onReceiveMessage(client: MqttClient, publish: Mqtt3Publish) {
+            override fun onReceiveMessage(client: MqttClient, publish: Mqtt5Publish) {
                 val payloadStr = String(publish.payloadAsBytes)
                 decodeFromString<TransportPayload>(format, payloadStr)?.let {
                     mqttApiPool.match(
@@ -35,7 +32,7 @@ class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
                         it.token,
                         CompressUtils.decompress(it.compress, it.payloadBytes)
                     )
-                } ?: kotlin.run {
+                } ?: run {
                     mqttApiPool.listenerList.forEach {
                         it.onUnknown(MqttApiBundle().apply {
                             this.body.topic = publish.topic.toString()
@@ -44,11 +41,19 @@ class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
                     }
                 }
             }
-        }
-    }
 
-    override fun connect(iCallBack: ICallBack<MqttClientConfig>?) {
-        mqttClient.connect(iCallBack)
+            override fun onDisconnected(cause: Throwable) {
+
+            }
+
+            override fun onConnected() {
+
+            }
+        }
+    }*/
+
+    override fun connect(listener: IMqttListener?, iCallBack: ICallBack<MqttClientConfig>?) {
+        mqttClient.connect(listener, iCallBack)
     }
 
     override fun subscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>?) {
@@ -75,7 +80,7 @@ class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
         iCallBack: ICallBack<Response>
     ) {
         val bundle = MqttApiBundle().apply {
-            val requestStr = request?.let { encodeToString(format, it) } ?: kotlin.run { "" }
+            val requestStr = request?.let { encodeToString(format, it) } ?: run { "" }
             val mOptions = options ?: requestOptions
             val transportPayload = TransportPayload().also {
                 it.payloadBytes = CompressUtils.compress(mOptions.compress, requestStr)
@@ -104,7 +109,7 @@ class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
                         } else {
                             decodeResponse(it, iCallBack)
                         }
-                    } ?: kotlin.run {
+                    } ?: run {
                         iCallBack.onSuccess(Response::class.createInstance())
                     }
                 } else {
@@ -125,7 +130,7 @@ class MqttApi(var mqttClient: OkMqttClient) : IMqttClient {
             } else {
                 iCallBack.onFail(ApiException(res.RT_F, res.RT_D))
             }
-        } ?: kotlin.run {
+        } ?: run {
             iCallBack.onFail(ApiException(EnumRT.UNKNOWN.code, "decodeResponse fail：$response"))
         }
     }

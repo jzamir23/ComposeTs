@@ -1,9 +1,10 @@
 package com.v2project.mqtt.api
 
+import com.hivemq.client.mqtt.MqttClientConfig
 import com.v2project.mqtt.ok.bean.Payload
 import com.v2project.mqtt.ok.bean.ResponsePayload
-import com.hivemq.client.mqtt.MqttClientConfig
 import com.v2project.mqtt.ok.int.ICallBack
+import com.v2project.mqtt.ok.int.IMqttListener
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -24,8 +25,8 @@ suspend inline fun <reified Request : Payload, reified Response : ResponsePayloa
     })
 }
 
-suspend fun MqttApi.connectAsync(): MqttClientConfig = suspendCoroutine { continuation ->
-    connect(object : ICallBack<MqttClientConfig> {
+suspend fun MqttApi.connectAsync(listener: IMqttListener?): MqttClientConfig = suspendCoroutine { continuation ->
+    connect(listener, object : ICallBack<MqttClientConfig> {
         override fun onSuccess(data: MqttClientConfig) {
             continuation.resume(value = data)
         }

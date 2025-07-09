@@ -80,7 +80,7 @@ class MqttApiPool {
                             listener.onComplete(it)
                         }
                     }
-                } ?: kotlin.run {
+                } ?: run {
                     callback?.onFail(Exception("$topic $token not match"))
                     listenerList.forEach { listener ->
                         listener.onMatchFail(MqttApiBundle().apply {

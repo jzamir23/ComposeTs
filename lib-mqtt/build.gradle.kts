@@ -10,9 +10,9 @@ plugins {
 
 android {
     namespace = "com.mqtt.lib"
-    compileSdk = 33
+    compileSdk = libs.versions.compileSdk.get().toInt()
     defaultConfig {
-        minSdk = 23
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildTypes {
@@ -45,7 +45,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.reflect)
-    implementation(libs.hivemq.mqtt.client)
+    api(libs.hivemq.mqtt.client)
     implementation(libs.kotlinx.datetime)
 }
 
@@ -55,7 +55,7 @@ afterEvaluate {
             create<MavenPublication>("maven") {
                 artifactId = "mqtt"// com.mqtt.wz:mqtt:1.0.1
                 group = "com.mqtt.wz"
-                version = "1.0.8"
+                version = "1.0.10"
                 pom.withXml {
                     val dependenciesNode = asNode().appendNode("dependencies")
                     configurations.implementation.get().allDependencies.forEach {
