@@ -5,8 +5,6 @@ import com.v2project.mqtt.ut.toHex
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
-const val RETAINED = false
-
 interface Payload
 
 @Serializable
@@ -113,3 +111,10 @@ enum class EnumRT(val code: Int, val desc: String) {
 fun valueOfRT(ordinal: Int): EnumRT {
     return EnumRT.values().find { it.ordinal == ordinal } ?: EnumRT.UNKNOWN
 }
+
+@Serializable
+data class ConfigRequest(
+    var recordId: String = "",              //下发任务时参数，android通知后台要带上这个
+    var deviceType: String = "HV06",        //HV06，HV05
+    var status: Int = -1,                   //-1失败，1已完成，2拒绝更新
+) : Payload

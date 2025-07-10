@@ -4,6 +4,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.serialization)
 }
 
 android {
@@ -19,25 +20,40 @@ android {
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
-            abiFilters.addAll(mutableSetOf("armeabi", "armeabi-v7a", "arm64-v8a"))
+            abiFilters.addAll(mutableSetOf(/*"armeabi",*/ "armeabi-v7a" /*"arm64-v8a"*/))
+        }
+    }
+
+    signingConfigs {
+        register("config") {
+            storeFile = file("../debug.keystore")
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storePassword = "android"
         }
     }
 
     buildTypes {
+        getByName("debug") {
+            isMinifyEnabled = false
+            isDebuggable = true
+            isShrinkResources = false
+            isJniDebuggable = true
+            signingConfig = signingConfigs.getByName("config")
+        }
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("config")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
     buildFeatures {
         //noinspection DataBindingWithoutKapt

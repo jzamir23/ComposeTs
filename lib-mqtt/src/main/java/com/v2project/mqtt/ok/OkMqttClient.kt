@@ -1,20 +1,20 @@
 package com.v2project.mqtt.ok
 
-import android.os.Build
+import android.annotation.SuppressLint
+import android.util.Log
 import com.hivemq.client.mqtt.MqttClient
 import com.hivemq.client.mqtt.MqttClientConfig
 import com.hivemq.client.mqtt.MqttClientState
 import com.hivemq.client.mqtt.datatypes.MqttQos
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
-import com.hivemq.client.mqtt.mqtt5.message.connect.connack.Mqtt5ConnAck
-import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish
 import com.v2project.mqtt.ok.bean.AutomaticReconnect
 import com.v2project.mqtt.ok.bean.RequestBody
 import com.v2project.mqtt.ok.int.ICallBack
 import com.v2project.mqtt.ok.int.IMqttClient
 import com.v2project.mqtt.ok.int.IMqttListener
-import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
+import com.v2project.mqtt.ut.NettyAndroidFix
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 
 class OkMqttClient private constructor(
     private var host: String,
@@ -27,20 +27,33 @@ class OkMqttClient private constructor(
 ) : IMqttClient {
     private lateinit var client: Mqtt5AsyncClient
     private var listener: IMqttListener? = null
-    private val unInitError = Exception("please call connect function first !!!")
+    private val unInitError = Exception("please call connect function first!")
+    private val executor = Executors.newSingleThreadExecutor()
+
+    init {
+        NettyAndroidFix.applyFix()
+    }
 
     override fun connect(listener: IMqttListener?, iCallBack: ICallBack<MqttClientConfig>?) {
         this.listener = listener
         if (!clientInitialized()) {
             initializeClient()
         }
-        // 如果已连接或正在连接，直接返回成功
-        if (client.state.isConnected || client.state.isConnectedOrReconnect) {
-            iCallBack?.onSuccess(client.config)
-            return
-        }
+        when (client.state) {
+            MqttClientState.CONNECTED -> {
+                iCallBack?.onSuccess(client.config)
+                return
+            }
 
-        connectWithCallback(iCallBack)
+            MqttClientState.CONNECTING, MqttClientState.CONNECTING_RECONNECT -> {
+                iCallBack?.onFail(IllegalStateException("Connection in progress"))
+                return
+            }
+
+            else -> {
+                connectWithCallback(iCallBack)
+            }
+        }
     }
 
     private fun initializeClient() {
@@ -65,144 +78,133 @@ class OkMqttClient private constructor(
             }.buildAsync()
     }
 
+    @SuppressLint("NewApi")
     private fun connectWithCallback(iCallBack: ICallBack<MqttClientConfig>? = null) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                client.connectWith()
-                    .cleanStart(cleanSession)
-                    .sessionExpiryInterval(sessionExpiryInterval)//有效期
-                    .keepAlive(keepAlive)
-                    .send()
-                    .whenComplete { _: Mqtt5ConnAck?, throwable: Throwable? ->
-                        if (throwable != null) {
-                            iCallBack?.onFail(throwable)
+            client.connectWith()
+                .cleanStart(cleanSession)
+                .sessionExpiryInterval(sessionExpiryInterval)//有效期
+                .keepAlive(keepAlive)
+                .send()
+                .whenCompleteAsync({ connAck, throwable ->
+                    if (throwable != null) {
+                        iCallBack?.onFail(throwable)
+                    } else {
+                        Log.d(
+                            TAG, "连接详情: " +
+                                    "会话存在: ${connAck.isSessionPresent}, " +
+                                    "会话有效期: ${connAck.sessionExpiryInterval.orElse(0)}s, " +
+                                    "原因码: ${connAck.reasonCode}"
+                        )
+                        // 检查会话是否恢复
+                        if (connAck.isSessionPresent) {
+                            Log.i(TAG, "会话恢复成功，过期时间：${connAck.sessionExpiryInterval.orElse(0)}s")
                         } else {
-                            iCallBack?.onSuccess(client.config)
+                            Log.i(TAG, "新建会话! 原因: ${connAck.reasonString}")
                         }
+                        iCallBack?.onSuccess(client.config)
                     }
-            } else {
-                client.connectWith()
-                    .cleanStart(cleanSession)
-                    .sessionExpiryInterval(sessionExpiryInterval)
-                    .keepAlive(keepAlive)
-                    .send()
-                iCallBack?.onSuccess(client.config)
-            }
+                }, executor)
         } catch (e: Exception) {
             iCallBack?.onFail(e)
         }
     }
 
-    private val consumer: Consumer<Mqtt5Publish> = Consumer<Mqtt5Publish> { t ->
-        listener?.onReceiveMessage(client, t)
-    }
-
+    @SuppressLint("NewApi")
     override fun subscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>?) {
-        if (clientInitialized()) {
-            if (!client.state.isConnected) {
-                iCallBack?.onFail(IllegalStateException("Not connected"))
-                return
-            }
-            var lastError: Throwable? = null
-            topics.forEach {
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        client.subscribeWith()
-                            .topicFilter(it)
-                            .qos(MqttQos.AT_LEAST_ONCE)
-                            .callback(consumer)
-                            .send()
-                            .get(5, TimeUnit.SECONDS)//5秒超时
-                    } else {
-                        client.subscribeWith()
-                            .topicFilter(it)
-                            .qos(MqttQos.AT_LEAST_ONCE)
-                            .callback(consumer)
-                            .send()
-                    }
-                } catch (e: Exception) {
-                    lastError = e
-                }
-            }
-            if (lastError == null) {
-                iCallBack?.onSuccess(client.config)
-            } else {
-                iCallBack?.onFail(lastError!!)
-            }
-        } else {
+        if (!clientInitialized() || !client.state.isConnected) {
             iCallBack?.onFail(unInitError)
+            return
         }
-    }
-
-    override fun unSubscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>?) {
-        if (clientInitialized()) {
-            if (!client.state.isConnected) {
-                iCallBack?.onFail(IllegalStateException("Not connected"))
-                return
-            }
-            topics.forEach {
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        client.unsubscribeWith()
-                            .topicFilter(it)
-                            .send()
-                            .get(5, TimeUnit.SECONDS)
-                    } else {
-                        client.unsubscribeWith()
-                            .topicFilter(it)
-                            .send()
-                    }
-                    iCallBack?.onSuccess(client.config)
-                } catch (e: Exception) {
-                    iCallBack?.onFail(e)
-                }
-            }
-        } else {
-            iCallBack?.onFail(unInitError)
-        }
-    }
-
-    fun publish(body: RequestBody, iCallBack: ICallBack<MqttClientConfig>? = null) {
-        if (clientInitialized()) {
-            if (!client.state.isConnected) {
-                iCallBack?.onFail(IllegalStateException("Not connected"))
-                return
-            }
+        val futures = mutableListOf<CompletableFuture<*>>()
+        val errors = mutableListOf<Throwable>()
+        topics.forEach { topic ->
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    client.publishWith()
-                        .topic(body.topic)
-                        .payload(body.payload)
-                        .qos(body.qos)
-                        .retain(body.retain)
-                        .messageExpiryInterval(3600)//1小时后过期
-                        .send()
-                        .whenComplete { _, throwable ->
-                            if (throwable != null) {
-                                iCallBack?.onFail(throwable)
-                            } else {
-                                iCallBack?.onSuccess(client.config)
-                            }
-                        }
+                val future = client.subscribeWith()
+                    .topicFilter(topic)
+                    .qos(MqttQos.AT_LEAST_ONCE)
+                    .noLocal(true)//不接收自己发布的消息
+                    .callback { publish ->
+                        listener?.onReceiveMessage(client, publish)
+                    }
+                    .send()
+
+                futures.add(future)
+            } catch (e: Exception) {
+                errors.add(e)
+                Log.e(TAG, "Subscribe error: ${e.message}", e)
+            }
+        }
+        if (errors.isNotEmpty()) {
+            iCallBack?.onFail(errors.first())
+            return
+        }
+        CompletableFuture.allOf(*futures.toTypedArray())
+            .whenCompleteAsync({ _, throwable ->
+                if (throwable != null) {
+                    iCallBack?.onFail(throwable)
                 } else {
-                    client.publishWith()
-                        .topic(body.topic)
-                        .payload(body.payload)
-                        .qos(body.qos)
-                        .retain(body.retain)
-                        .messageExpiryInterval(3600)//1小时后过期
-                        .send()
                     iCallBack?.onSuccess(client.config)
                 }
-            } catch (e: Exception) {
-                iCallBack?.onFail(e)
-            }
-        } else {
+            }, executor)
+    }
+
+    @SuppressLint("NewApi")
+    override fun unSubscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>?) {
+        if (!clientInitialized() || !client.state.isConnected) {
             iCallBack?.onFail(unInitError)
+            return
+        }
+        val futures = mutableListOf<CompletableFuture<*>>()
+        val errors = mutableListOf<Throwable>()
+        topics.forEach { topic ->
+            try {
+                val future = client.unsubscribeWith()
+                    .topicFilter(topic)
+                    .send()
+                    .thenApply {
+                        iCallBack?.onSuccess(client.config)
+                    }
+
+                futures.add(future)
+            } catch (e: Exception) {
+                errors.add(e)
+                Log.e(TAG, "Unsubscribe error: ${e.message}", e)
+            }
+        }
+
+        if (errors.isNotEmpty()) {
+            iCallBack?.onFail(errors.first())
         }
     }
 
-    override fun getMqttClientState(): MqttClientState {
+    @SuppressLint("NewApi")
+    fun publish(body: RequestBody, iCallBack: ICallBack<MqttClientConfig>? = null) {
+        if (!clientInitialized() || !client.state.isConnected) {
+            iCallBack?.onFail(unInitError)
+            return
+        }
+        try {
+            client.publishWith()
+                .topic(body.topic)
+                .payload(body.payload)
+                .qos(body.qos)
+                .retain(body.retain)
+                .messageExpiryInterval(body.messageExpiryInterval)
+                .send()
+                .whenCompleteAsync({ _, throwable ->
+                    if (throwable != null) {
+                        iCallBack?.onFail(throwable)
+                    } else {
+                        iCallBack?.onSuccess(client.config)
+                    }
+                }, executor)
+        } catch (e: Exception) {
+            iCallBack?.onFail(e)
+        }
+    }
+
+    override fun mqttClientState(): MqttClientState {
         return if (clientInitialized()) client.state else MqttClientState.DISCONNECTED
     }
 
@@ -216,6 +218,7 @@ class OkMqttClient private constructor(
 
     companion object {
         inline fun build(block: Builder.() -> Unit) = Builder().apply(block).build()
+        private const val TAG = "OkMqttClient"
     }
 
     class Builder {
@@ -223,8 +226,8 @@ class OkMqttClient private constructor(
         var port: Int = 0
         var identifier: String = ""
         var keepAlive: Int = 30
-        var cleanSession: Boolean = true
-        var sessionExpiryInterval = 60 * 60L
+        var cleanSession: Boolean = false // 默认false 支持离线消息
+        var sessionExpiryInterval = 7 * 24 * 3600L // 默认7天会话
         var reconnect: AutomaticReconnect = AutomaticReconnect()
 
         fun build() = OkMqttClient(
@@ -238,4 +241,3 @@ class OkMqttClient private constructor(
         )
     }
 }
-

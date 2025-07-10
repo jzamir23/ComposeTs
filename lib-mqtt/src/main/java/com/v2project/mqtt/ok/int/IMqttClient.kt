@@ -7,6 +7,6 @@ interface IMqttClient {
     fun connect(listener: IMqttListener?, iCallBack: ICallBack<MqttClientConfig>? = null)
     fun subscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>? = null)
     fun unSubscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>? = null)
-    fun getMqttClientState(): MqttClientState
+    fun mqttClientState(): MqttClientState
     fun disconnect()
 }

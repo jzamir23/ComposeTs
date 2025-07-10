@@ -13,23 +13,27 @@ object CompressUtils {
             EnumCompress.UNCOMPRESSED.ordinal -> {
                 json.toByteArray()
             }
+
             EnumCompress.ZSTD.ordinal -> {
                 ZstdUtils.compress(json, level)
             }
+
             else -> {
                 DeflaterUtils.compress(json)
             }
         }
     }
 
-    fun decompress(compress: Int, bytes: ByteArray): String {
+    fun decompress(compress: Int = EnumCompress.UNCOMPRESSED.ordinal, bytes: ByteArray): String {
         return when (compress) {
             EnumCompress.UNCOMPRESSED.ordinal -> {
                 String(bytes)
             }
+
             EnumCompress.ZSTD.ordinal -> {
                 ZstdUtils.decompress(bytes)
             }
+
             else -> {
                 DeflaterUtils.decompress(bytes)
             }

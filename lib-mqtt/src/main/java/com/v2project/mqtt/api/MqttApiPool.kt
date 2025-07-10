@@ -31,7 +31,7 @@ class MqttApiPool {
             launch { run() }
             delay(bundle.timeout)
             if (bundle.retry > 0 && bundle.curRetry < bundle.retry) {
-                bundle.curRetry = bundle.curRetry + 1
+                bundle.curRetry += 1
                 listenerList.forEach { listener ->
                     listener.onRepeat(bundle)
                 }
