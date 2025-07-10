@@ -10,29 +10,29 @@
         android:visibility="visible">
 
         <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/tv_connect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/holo_green_light"
+            android:gravity="center"
+            android:paddingHorizontal="18dp"
+            android:paddingVertical="18dp"
+            android:text="HiveMQ5.0 Connect"
+            android:textColor="@color/white"
+            android:textSize="32sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/tv_send"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:layout_marginTop="15dp"
             android:background="@android:color/holo_purple"
             android:gravity="center"
             android:paddingHorizontal="18dp"
             android:paddingVertical="18dp"
             android:text="SendMessage"
-            android:textColor="@color/white"
-            android:textSize="32sp" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/tv_connect"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="15dp"
-            android:background="@android:color/holo_green_light"
-            android:gravity="center"
-            android:paddingHorizontal="18dp"
-            android:paddingVertical="18dp"
-            android:text="Connect"
             android:textColor="@color/white"
             android:textSize="32sp" />
     </LinearLayout>

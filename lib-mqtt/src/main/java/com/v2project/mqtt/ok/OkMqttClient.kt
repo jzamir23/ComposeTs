@@ -91,8 +91,7 @@ class OkMqttClient private constructor(
                         iCallBack?.onFail(throwable)
                     } else {
                         Log.d(
-                            TAG, "连接详情: " +
-                                    "会话存在: ${connAck.isSessionPresent}, " +
+                            TAG, "会话详情 -> 会话是否存在: ${connAck.isSessionPresent}, " +
                                     "会话有效期: ${connAck.sessionExpiryInterval.orElse(0)}s, " +
                                     "原因码: ${connAck.reasonCode}"
                         )
@@ -100,7 +99,7 @@ class OkMqttClient private constructor(
                         if (connAck.isSessionPresent) {
                             Log.i(TAG, "会话恢复成功，过期时间：${connAck.sessionExpiryInterval.orElse(0)}s")
                         } else {
-                            Log.i(TAG, "新建会话! 原因: ${connAck.reasonString}")
+                            Log.i(TAG, "新建会话!")
                         }
                         iCallBack?.onSuccess(client.config)
                     }
