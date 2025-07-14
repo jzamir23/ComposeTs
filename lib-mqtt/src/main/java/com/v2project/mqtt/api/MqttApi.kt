@@ -47,8 +47,8 @@ class MqttApi(val mqttClient: OkMqttClient) : IMqttClient {
         }
     }*/
 
-    override fun connect(listener: IMqttListener?, iCallBack: ICallBack<MqttClientConfig>?) {
-        mqttClient.connect(listener, iCallBack)
+    override fun connect(listener: IMqttListener<MqttClientConfig>?) {
+        mqttClient.connect(listener)
     }
 
     override fun subscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>?) {

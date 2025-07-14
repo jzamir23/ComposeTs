@@ -55,7 +55,7 @@ afterEvaluate {
             create<MavenPublication>("maven") {
                 artifactId = "mqtt"// com.mqtt.wz:mqtt:1.0.1
                 group = "com.mqtt.wz"
-                version = "1.0.11"
+                version = "1.0.12"
                 pom.withXml {
                     val dependenciesNode = asNode().appendNode("dependencies")
                     configurations.implementation.get().allDependencies.forEach {

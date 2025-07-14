@@ -61,7 +61,7 @@ class MainActivity : Activity() {
         binding.tvConnect.setOnClickListener {
             try {
                 logger.debug { "开始MQTT连接..." }
-                api.connect(object : IMqttListener {
+                api.connect(object : IMqttListener<MqttClientConfig> {
                     override fun onReceiveMessage(client: MqttClient, publish: Mqtt5Publish) {
                         val topic = publish.topic.toString()
                         val messageStr = CompressUtils.decompress(bytes = publish.payloadAsBytes)
@@ -75,7 +75,7 @@ class MainActivity : Activity() {
                     override fun onConnected() {
                         logger.debug { "连接成功" }
                     }
-                }, object : ICallBack<MqttClientConfig> {
+
                     override fun onSuccess(data: MqttClientConfig) {
                         logger.debug { "首次连接成功：${data.serverAddress}，开始订阅..." }
                         val list = listOf("hv08/upgrade/$deviceId")

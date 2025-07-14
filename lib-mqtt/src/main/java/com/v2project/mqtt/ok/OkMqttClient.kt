@@ -26,7 +26,7 @@ class OkMqttClient private constructor(
     private var reconnect: AutomaticReconnect
 ) : IMqttClient {
     private lateinit var client: Mqtt5AsyncClient
-    private var listener: IMqttListener? = null
+    private var listener: IMqttListener<MqttClientConfig>? = null
     private val unInitError = Exception("please call connect function first!")
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -34,24 +34,24 @@ class OkMqttClient private constructor(
         NettyAndroidFix.applyFix()
     }
 
-    override fun connect(listener: IMqttListener?, iCallBack: ICallBack<MqttClientConfig>?) {
+    override fun connect(listener: IMqttListener<MqttClientConfig>?) {
         this.listener = listener
         if (!clientInitialized()) {
             initializeClient()
         }
         when (client.state) {
             MqttClientState.CONNECTED -> {
-                iCallBack?.onSuccess(client.config)
+                listener?.onSuccess(client.config)
                 return
             }
 
             MqttClientState.CONNECTING, MqttClientState.CONNECTING_RECONNECT -> {
-                iCallBack?.onFail(IllegalStateException("Connection in progress"))
+                listener?.onFail(IllegalStateException("Connection in progress"))
                 return
             }
 
             else -> {
-                connectWithCallback(iCallBack)
+                connectWithCallback()
             }
         }
     }
@@ -79,7 +79,7 @@ class OkMqttClient private constructor(
     }
 
     @SuppressLint("NewApi")
-    private fun connectWithCallback(iCallBack: ICallBack<MqttClientConfig>? = null) {
+    private fun connectWithCallback() {
         try {
             client.connectWith()
                 .cleanStart(cleanSession)
@@ -88,7 +88,7 @@ class OkMqttClient private constructor(
                 .send()
                 .whenCompleteAsync({ connAck, throwable ->
                     if (throwable != null) {
-                        iCallBack?.onFail(throwable)
+                        listener?.onFail(throwable)
                     } else {
                         Log.d(
                             TAG, "会话详情 -> 会话是否存在: ${connAck.isSessionPresent}, " +
@@ -101,11 +101,11 @@ class OkMqttClient private constructor(
                         } else {
                             Log.i(TAG, "新建会话!")
                         }
-                        iCallBack?.onSuccess(client.config)
+                        listener?.onSuccess(client.config)
                     }
                 }, executor)
         } catch (e: Exception) {
-            iCallBack?.onFail(e)
+            listener?.onFail(e)
         }
     }
 
