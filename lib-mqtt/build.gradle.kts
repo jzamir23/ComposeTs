@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     api(libs.hivemq.mqtt.client)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.slf4j.api)
 }
 
 afterEvaluate {
@@ -55,7 +56,7 @@ afterEvaluate {
             create<MavenPublication>("maven") {
                 artifactId = "mqtt"// com.mqtt.wz:mqtt:1.0.1
                 group = "com.mqtt.wz"
-                version = "1.0.12"
+                version = "1.0.13"
                 pom.withXml {
                     val dependenciesNode = asNode().appendNode("dependencies")
                     configurations.implementation.get().allDependencies.forEach {

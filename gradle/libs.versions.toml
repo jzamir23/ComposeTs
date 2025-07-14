@@ -47,6 +47,7 @@ version-gradle-plugin = "1.9.0"
 version-serialization = "1.6.10"
 version-kotlin-dsl = "4.0.6"
 zstdJni = "1.5.2-3"
+slf4j = "1.7.36"
 
 [libraries]
 accompanist-adaptive = { module = "com.google.accompanist:accompanist-adaptive", version.ref = "accompanist" }
@@ -99,6 +100,7 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 rometools-modules = { module = "com.rometools:rome-modules", version.ref = "rome" }
 rometools-rome = { module = "com.rometools:rome", version.ref = "rome" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstdJni" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
