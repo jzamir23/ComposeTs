@@ -5,6 +5,7 @@ import android.util.Log
 import com.hivemq.client.mqtt.MqttClient
 import com.hivemq.client.mqtt.MqttClientConfig
 import com.hivemq.client.mqtt.MqttClientState
+import com.hivemq.client.mqtt.MqttGlobalPublishFilter
 import com.hivemq.client.mqtt.datatypes.MqttQos
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import com.v2project.mqtt.ok.bean.AutomaticReconnect
@@ -71,6 +72,12 @@ class OkMqttClient private constructor(
             }.addDisconnectedListener { context ->
                 listener?.onDisconnected(context.cause)
             }.buildAsync()
+
+        client.toAsync().publishes(MqttGlobalPublishFilter.SUBSCRIBED) { publish ->
+            listener?.onReceiveMessage(publish)
+        }
+
+        listener?.onInitCompleted()
     }
 
     @SuppressLint("NewApi")
@@ -106,7 +113,7 @@ class OkMqttClient private constructor(
 
     @SuppressLint("NewApi")
     override fun subscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>?) {
-        if (!clientInitialized() || !client.state.isConnected) {
+        if (!clientInitialized()) {
             iCallBack?.onFail(unInitError)
             return
         }
@@ -118,9 +125,6 @@ class OkMqttClient private constructor(
                     .topicFilter(topic)
                     .qos(MqttQos.AT_LEAST_ONCE)
                     .noLocal(true)//不接收自己发布的消息
-                    .callback { publish ->
-                        listener?.onReceiveMessage(client, publish)
-                    }
                     .send()
 
                 futures.add(future)
@@ -145,7 +149,7 @@ class OkMqttClient private constructor(
 
     @SuppressLint("NewApi")
     override fun unSubscribe(topics: List<String>, iCallBack: ICallBack<MqttClientConfig>?) {
-        if (!clientInitialized() || !client.state.isConnected) {
+        if (!clientInitialized()) {
             iCallBack?.onFail(unInitError)
             return
         }

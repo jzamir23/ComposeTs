@@ -4,7 +4,6 @@ import android.app.Activity
 import android.os.Bundle
 import androidx.databinding.DataBindingUtil
 import com.example.composets.databinding.ActivityMainBinding
-import com.hivemq.client.mqtt.MqttClient
 import com.hivemq.client.mqtt.MqttClientConfig
 import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish
 import com.v2project.mqtt.api.MqttApi
@@ -62,7 +61,7 @@ class MainActivity : Activity() {
             try {
                 logger.debug { "开始MQTT连接..." }
                 api.connect(object : IMqttListener<MqttClientConfig> {
-                    override fun onReceiveMessage(client: MqttClient, publish: Mqtt5Publish) {
+                    override fun onReceiveMessage(publish: Mqtt5Publish) {
                         val topic = publish.topic.toString()
                         val messageStr = CompressUtils.decompress(bytes = publish.payloadAsBytes)
                         logger.debug { "收到消息 topic: $topic，response: $messageStr" }
@@ -73,11 +72,11 @@ class MainActivity : Activity() {
                     }
 
                     override fun onConnected() {
-                        logger.debug { "连接成功" }
+                        logger.debug { "MQTT连接成功" }
                     }
 
-                    override fun onSuccess(data: MqttClientConfig) {
-                        logger.debug { "首次连接成功：${data.serverAddress}，开始订阅..." }
+                    override fun onInitCompleted() {
+                        logger.debug { "初始化完成，开始订阅..." }
                         val list = listOf("hv08/upgrade/$deviceId")
                         api.subscribe(list, object : ICallBack<MqttClientConfig> {
                             override fun onSuccess(data: MqttClientConfig) {
@@ -88,6 +87,10 @@ class MainActivity : Activity() {
                                 logger.error { "订阅失败: $throwable" }
                             }
                         })
+                    }
+
+                    override fun onSuccess(data: MqttClientConfig) {
+                        logger.debug { "连接完成：${data.serverAddress}" }
                     }
 
                     override fun onFail(throwable: Throwable) {
