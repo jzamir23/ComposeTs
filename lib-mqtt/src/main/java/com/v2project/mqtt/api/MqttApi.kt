@@ -9,9 +9,15 @@ import com.v2project.mqtt.ok.int.IMqttClient
 import com.v2project.mqtt.ok.int.IMqttListener
 import com.v2project.mqtt.ut.CompressUtils
 import com.v2project.mqtt.ut.JsonLazyFormat
+import com.v2project.mqtt.ut.NettyAndroidFix
 import com.v2project.mqtt.ut.encodeToString
 
 class MqttApi(val mqttClient: OkMqttClient) : IMqttClient {
+
+    init {
+        NettyAndroidFix.applyFix()
+    }
+
     val format by lazy { JsonLazyFormat.lazyFormat(encodeDefaults = true) }
 
     //val mqttApiPool = MqttApiPool()

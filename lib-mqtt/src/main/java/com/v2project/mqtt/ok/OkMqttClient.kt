@@ -12,7 +12,6 @@ import com.v2project.mqtt.ok.bean.RequestBody
 import com.v2project.mqtt.ok.int.ICallBack
 import com.v2project.mqtt.ok.int.IMqttClient
 import com.v2project.mqtt.ok.int.IMqttListener
-import com.v2project.mqtt.ut.NettyAndroidFix
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 
@@ -29,10 +28,6 @@ class OkMqttClient private constructor(
     private var listener: IMqttListener<MqttClientConfig>? = null
     private val unInitError = Exception("please call connect function first!")
     private val executor = Executors.newSingleThreadExecutor()
-
-    init {
-        NettyAndroidFix.applyFix()
-    }
 
     override fun connect(listener: IMqttListener<MqttClientConfig>?) {
         this.listener = listener

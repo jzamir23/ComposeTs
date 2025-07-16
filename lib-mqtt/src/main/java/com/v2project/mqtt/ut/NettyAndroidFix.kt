@@ -9,35 +9,19 @@ object NettyAndroidFix {
         if (isFixed) return
 
         try {
-//            // 设置 Netty 属性
-//            System.setProperty("io.netty.processId", "0")
-//            System.setProperty("io.netty.machineId", "0")
-//
-//            // 确保 Netty 使用 Android 兼容的 DNS 解析
-//            System.setProperty("io.netty.handler.ssl.noOpenSsl", "true")
-//            System.setProperty("io.netty.transport.noNative", "true")
-
-
+            // 设置 Netty 属性
+            System.setProperty("io.netty.logging", "SLF4J")
+            System.setProperty("io.netty.noPreferDirect", "true")
+            System.setProperty("io.netty.noUnsafe", "true")
+            System.setProperty("io.netty.transport.noNative", "true")
             // 使用合法的全零 MAC 地址格式
             System.setProperty("io.netty.machineId", "00:00:00:00:00:00")
-            System.setProperty("io.netty.processId", "0")
+            System.setProperty("io.netty.processId", "" + android.os.Process.myPid())
 
-            // 绕过 MAC 地址验证
-//            val macAddressUtil = Class.forName("io.netty.util.internal.MacAddressUtil")
-//            val bestAvailableMacMethod = macAddressUtil.getDeclaredMethod("bestAvailableMac")
-//            bestAvailableMacMethod.isAccessible = true
-//            val mac = bestAvailableMacMethod.invoke(null) as ByteArray
-
-//            // 设置有效的机器ID
-//            val defaultChannelId = Class.forName("io.netty.channel.DefaultChannelId")
-//            val machineIdField = defaultChannelId.getDeclaredField("machineId")
-//            machineIdField.isAccessible = true
-//            machineIdField.set(null, mac)
-
-//            // 初始化 Netty 避免后续错误
-//            val defaultProcessIdMethod = defaultChannelId.getDeclaredMethod("defaultProcessId")
-//            defaultProcessIdMethod.isAccessible = true
-//            defaultProcessIdMethod.invoke(null)
+            // 强制初始化关键 Netty 类
+            Class.forName("io.netty.util.internal.SystemPropertyUtil")
+            Class.forName("io.netty.util.NetUtil")
+            Class.forName("io.netty.channel.nio.NioEventLoopGroup")
 
             isFixed = true
         } catch (e: Exception) {
