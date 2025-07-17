@@ -44,8 +44,11 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.reflect)
-    api(libs.hivemq.mqtt.client)
+    api(libs.hivemq.mqtt.client) {
+        exclude(group = "org.slf4j", module = "slf4j.api")
+    }
     implementation(libs.kotlinx.datetime)
+    implementation(libs.slf4j.android)
 }
 
 afterEvaluate {
@@ -54,7 +57,7 @@ afterEvaluate {
             create<MavenPublication>("maven") {
                 artifactId = "mqtt"// com.mqtt.wz:mqtt:1.0.1
                 group = "com.mqtt.wz"
-                version = "1.1.5"
+                version = "1.1.6"
                 pom.withXml {
                     val dependenciesNode = asNode().appendNode("dependencies")
                     configurations.implementation.get().allDependencies.forEach {
